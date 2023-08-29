@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mym.flink</groupId>
+    <artifactId>fink-sql-executor</artifactId>
+    <version>1.0</version>
+
+    <properties>
+        <!--<runtimes.scope>compile</runtimes.scope>-->
+        <runtimes.scope>provided</runtimes.scope>
+        <skipTests>true</skipTests>
+        <scala.version>2.12</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <flink.version>1.13.6</flink.version>
+
+        <!--内部公用module-->
+        <common.version>2.0-dev</common.version>
+        <!--ali vetex-->
+        <ververica-connector-datahub.version>1.11-vvr-2.1.3</ververica-connector-datahub.version>
+        <sts-credential-fetcher.version>1.0.2-SNAPSHOT</sts-credential-fetcher.version>
+        <vertx-jdbc-client.version>4.0.3</vertx-jdbc-client.version>
+        <agroal.version>1.9</agroal.version>
+        <!--connection-->
+        <mysql-connector-java.version>8.0.17</mysql-connector-java.version>
+        <druid.version>1.1.20</druid.version>
+        <alihbase-client.version>2.8.2</alihbase-client.version>
+        <thinkingdatasdk.version>1.8.2</thinkingdatasdk.version>
+
+        <!--其他工具依赖-->
+        <junit.version>4.11</junit.version>
+        <hutool-all.version>5.7.17</hutool-all.version>
+        <slf4j-log4j12.version>1.7.7</slf4j-log4j12.version>
+        <log4j.version>1.2.17</log4j.version>
+        <fastjson.version>1.2.76</fastjson.version>
+        <lombok.version>1.18.10</lombok.version>
+        <javax.activation.version>1.1</javax.activation.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--==========================Flink start=======================-->
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-java</artifactId>
+                <version>${flink.version}</version>
+                <scope>${runtimes.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-streaming-scala_${scala.version}</artifactId>
+                <version>${flink.version}</version>
+                <scope>${runtimes.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-streaming-java_${scala.version}</artifactId>
+                <version>${flink.version}</version>
+                <scope>${runtimes.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-clients_${scala.version}</artifactId>
+                <version>${flink.version}</version>
+                <scope>${runtimes.scope}</scope>
+            </dependency>
+            <!-- flink table  flink sql 相关 start -->
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-table-api-java-bridge_${scala.version}</artifactId>
+                <version>${flink.version}</version>
+                <scope>${runtimes.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-table-planner-blink_${scala.version}</artifactId>
+                <version>${flink.version}</version>
+                <scope>${runtimes.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-table-common</artifactId>
+                <version>${flink.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-connector-jdbc_${scala.version}</artifactId>
+                <version>${flink.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-connector-kafka_${scala.version}</artifactId>
+                <version>${flink.version}</version>
+            </dependency>
+
+            <!--============================Alibaba Flink start========================-->
+            <!-- flink table  flink sql 相关 end -->
+            <!-- Add for datahub -->
+            <dependency>
+                <groupId>com.alibaba.ververica</groupId>
+                <artifactId>ververica-connector-datahub</artifactId>
+                <version>${ververica-connector-datahub.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.ververica</groupId>
+                <artifactId>sts-credential-fetcher</artifactId>
+                <version>${sts-credential-fetcher.version}</version>
+            </dependency>
+            <!-- Add for vertx  test时使用-->
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-jdbc-client</artifactId>
+                <version>${vertx-jdbc-client.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.agroal</groupId>
+                <artifactId>agroal-api</artifactId>
+                <version>${agroal.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.agroal</groupId>
+                <artifactId>agroal-pool</artifactId>
+                <version>${agroal.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!--======================Connection start======================-->
+            <!-- Add for mysql -->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql-connector-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+            <!-- Add for hbase -->
+            <dependency>
+                <groupId>com.aliyun.hbase</groupId>
+                <artifactId>alihbase-client</artifactId>
+                <version>${alihbase-client.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>fastjson</artifactId>
+                        <groupId>com.alibaba</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>cn.thinkingdata</groupId>
+                <artifactId>thinkingdatasdk</artifactId>
+                <version>${thinkingdatasdk.version}</version>
+            </dependency>
+
+
+            <!-- ============================工具 start============================ -->
+            <!-- 时间工具类 -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j-log4j12.version}</version>
+                <!--<scope>runtime</scope>-->
+            </dependency>
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>${log4j.version}</version>
+                <!--<scope>runtime</scope>-->
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+            <!-- Add for lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <!--      <scope>provided</scope>-->
+            </dependency>
+            <dependency>
+                <groupId>javax.activation</groupId>
+                <artifactId>activation</artifactId>
+                <version>${javax.activation.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!--==========================Flink start=======================-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-java</artifactId>
+            <scope>${runtimes.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-scala_${scala.version}</artifactId>
+            <scope>${runtimes.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-java_${scala.version}</artifactId>
+            <scope>${runtimes.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_${scala.version}</artifactId>
+            <scope>${runtimes.scope}</scope>
+        </dependency>
+        <!-- flink table  flink sql 相关 start -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-common</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-jdbc_${scala.version}</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-kafka_${scala.version}</artifactId>
+        </dependency>
+
+        <!--============================Alibaba Flink start========================-->
+        <!-- flink table  flink sql 相关 end -->
+        <!-- Add for datahub -->
+        <dependency>
+            <groupId>com.alibaba.ververica</groupId>
+            <artifactId>ververica-connector-datahub</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.ververica</groupId>
+            <artifactId>sts-credential-fetcher</artifactId>
+        </dependency>
+        <!-- Add for vertx  test时使用-->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-jdbc-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.agroal</groupId>
+            <artifactId>agroal-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.agroal</groupId>
+            <artifactId>agroal-pool</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--======================Connection start======================-->
+        <!-- Add for mysql -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+        </dependency>
+        <!-- Add for hbase -->
+        <dependency>
+            <groupId>com.aliyun.hbase</groupId>
+            <artifactId>alihbase-client</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>fastjson</artifactId>
+                    <groupId>com.alibaba</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>cn.thinkingdata</groupId>
+            <artifactId>thinkingdatasdk</artifactId>
+        </dependency>
+
+
+        <!-- ============================工具 start============================ -->
+        <!-- 时间工具类 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <!--<scope>runtime</scope>-->
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <!--<scope>runtime</scope>-->
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+        <!-- Add for lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <!--      <scope>provided</scope>-->
+        </dependency>
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner-blink_2.12</artifactId>
+            <version>${flink.version}</version>
+            <scope>${runtimes.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-runtime-blink_2.12</artifactId>
+            <version>${flink.version}</version>
+            <scope>${runtimes.scope}</scope>
+        </dependency>
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.calcite</groupId>-->
+        <!--            <artifactId>calcite-core</artifactId>-->
+        <!--            <version>1.35.0</version> &lt;!&ndash; 使用时需要检查最新版本 &ndash;&gt;-->
+        <!--        </dependency>-->
+
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>aliyun</id>
+            <name>aliyun</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>your main class</Main-Class>
+                                        <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                                        <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <relocations combine.self="override">
+                                <relocation>
+                                    <pattern>org.glassfish.jersey</pattern>
+                                    <shadedPattern>com.alibaba.blink.shaded.datahub.org.glassfish.jersey</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>javax.ws.rs.core.UriBuilder</pattern>
+                                    <shadedPattern>com.alibaba.blink.javax.ws.rs.core.UriBuilder</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
