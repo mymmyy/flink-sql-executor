@@ -19,4 +19,7 @@
 - 个人开发者。
 - 不需要UI界面的SQL开发场景。
 
-建议：如果FlinkSQL作业规划较多，团队规模较大，需要多租户形式等，可使用开源项目如Dinky、StreamPark等
+# 试用
+参考example包下示例代码
+
+建议：如果FlinkSQL作业规划较多，团队规模较大，需要多租户形式等，可参考开源项目如Dinky、StreamPark等
