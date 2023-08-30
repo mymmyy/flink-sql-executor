@@ -2,7 +2,14 @@ package com.mym.flink.sqlexecutor.sqlclient.bean;
 
 import com.mym.flink.sqlexecutor.sqlclient.SqlClient;
 
+import java.util.Map;
+
 public class DefaultEmptyTaskAspectsDescriptor extends AbstractTaskAspectsDescriptor{
+    @Override
+    public Map<String, String> configProgramParam(String[] args, SqlClient sqlClient) {
+        return null;
+    }
+
     @Override
     public void beforeParseParam(String[] args, SqlClient sqlClient) {
 

@@ -1,12 +1,12 @@
 package com.mym.flink.sqlexecutor.sqlclient.bean;
 
 import com.mym.flink.sqlexecutor.sqlclient.enumtype.ExecutionOptions;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
 import java.time.Duration;
+import java.util.Map;
 
 public class StreamingExecuteOption implements FlinkExecuteOption {
 
@@ -22,14 +22,14 @@ public class StreamingExecuteOption implements FlinkExecuteOption {
 
     private JobEnvConfig jobEnvConfig;
 
-    private ParameterTool parameterTool;
+    private Map<String, String> paramMap;
 
-    public StreamingExecuteOption(ParameterTool parameterTool) {
-        this(parameterTool, "sql-job", new JobEnvConfig());
+    public StreamingExecuteOption(Map<String, String> paramMap) {
+        this(paramMap, "sql-job", new JobEnvConfig());
     }
 
-    public StreamingExecuteOption(ParameterTool parameterTool, String jobName, JobEnvConfig jobEnvConfig) {
-        this.parameterTool = parameterTool;
+    public StreamingExecuteOption(Map<String, String> paramMap, String jobName, JobEnvConfig jobEnvConfig) {
+        this.paramMap = paramMap;
         this.jobName = jobName;
         this.streamEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
         this.environmentSettings = EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();

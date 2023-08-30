@@ -25,6 +25,7 @@ public class SqlFileReader {
     final static Logger LOGGER = LoggerFactory.getLogger(SqlFileReader.class);
     private final static String SQL_DELIMITER = ";";
     private final static String SQL_ANNOTATION_START = "--#";
+    private final static String SQL_INNER_ANNOTATION_START = "--";
     private final static String SQL_ANNOTATION_DELIMITER = ",";
     private final static String SQL_ANNOTATION_KV_DELIMITER = "=";
     private final static String TABLE_NAME = "tablename";
@@ -57,6 +58,10 @@ public class SqlFileReader {
         LOGGER.info("read sql over, there is all read sql graph node info print start ---------------------");
         boolean isDDL = false;
         for (String fileName : fileNameList) {
+            if(!fileName.endsWith(".sql")){
+                LOGGER.warn("foreach read sql, fileName is not a .sql file, will skip it!");
+                continue;
+            }
             String path = resourceSeparator + baseDirName + resourceSeparator + fileName;
             LOGGER.info("foreach read sql, file name:{}", path);
             LinkedList<SqlGraphNode> sqlGraphNodes = parseSqlFile(path);
@@ -145,11 +150,19 @@ public class SqlFileReader {
             fr = new FileReader(filePath);
             br = new BufferedReader(fr);
             String line;
+            int sqlAnnoStartIndex;
             while ((line = br.readLine()) != null) {
                 if(line.startsWith(SQL_ANNOTATION_START)){
                     annotationSB.append(line);
                 } else {
-                    sqlSB.append(line);
+                    // 去除sql内以--开头的注释
+                    sqlAnnoStartIndex = line.indexOf(SQL_INNER_ANNOTATION_START);
+                    if(sqlAnnoStartIndex >= 0){
+                        sqlSB.append(line.substring(0, sqlAnnoStartIndex));
+                    } else {
+                        sqlSB.append(line);
+                    }
+                    sqlSB.append(" ");
                 }
 
                 // 当我们遇到一个分号，我们知道 SQL 语句结束了

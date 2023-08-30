@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class GraphNodeParser {
 
-    private static final String CUSTOM_OPERATOR_CLASS_NAME_PREFIX = "com.leiting";
+    private static final String CUSTOM_OPERATOR_CLASS_NAME_PREFIX = "com";
 
 
     /**

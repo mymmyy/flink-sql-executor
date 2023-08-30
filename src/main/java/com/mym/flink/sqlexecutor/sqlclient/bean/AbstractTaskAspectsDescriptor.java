@@ -2,6 +2,8 @@ package com.mym.flink.sqlexecutor.sqlclient.bean;
 
 import com.mym.flink.sqlexecutor.sqlclient.SqlClient;
 
+import java.util.Map;
+
 /**
  * 抽象任务切面描述器（增强、扩展任务构建过程）
  * <br/>一个SQL任务大致几个过程：本地SqlClient初始化、解析参数和解析SQL、构建流（批）执行环境（环境配置、注册UDF等）、构建执行图、提交执行
@@ -9,6 +11,15 @@ import com.mym.flink.sqlexecutor.sqlclient.SqlClient;
  * @author maoym
  */
 public abstract class AbstractTaskAspectsDescriptor {
+
+    /**
+     * 配置程序参数，设置的程序参数可在sql文件中和自定算子中访问
+     *
+     * @param args      args参数
+     * @param sqlClient sql客户端
+     * @return {@link Map}<{@link String}, {@link String}>
+     */
+    public abstract Map<String, String> configProgramParam(String[] args, SqlClient sqlClient);
 
     /**
      * 解析外部参数前：SqlClient初始化后，解析sql文件前

@@ -37,14 +37,29 @@ public class SqlClient {
         this.taskAspectsDescriptor =  new DefaultEmptyTaskAspectsDescriptor();
     }
 
+    /**
+     * 执行
+     * 默认读resource的sql目录
+     *
+     * @param args arg参数
+     * @throws Exception 异常
+     */
     public void execute(String[] args) throws Exception {
-        execute(args, null);
+        execute(args, "sql");
     }
 
+    /**
+     * 执行
+     *
+     * @param args         args
+     * @param baseFilePath sql文件目录。如果在jar的resource目录，则不需要/开头，如果在其他地方，需要绝对路径；为null默认读resource的sql目录
+     * @throws Exception 异常
+     */
     public void execute(String[] args, String baseFilePath) throws Exception {
         /* parse outer param */
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
         Map<String, String> paramMap = parameterTool.toMap();
+        Optional.ofNullable(taskAspectsDescriptor.configProgramParam(args, this)).ifPresent(paramMap::putAll);
         taskAspectsDescriptor.beforeParseParam(args, this);
         taskAspectsDescriptor.registerUdf(this);
         taskAspectsDescriptor.registerCustomOperator(this);
@@ -63,7 +78,7 @@ public class SqlClient {
         LOGGER.info("parse execute info over.");
 
         /* init env */
-        StreamingExecuteOption executeOption = new StreamingExecuteOption(parameterTool, "sql-job-" + UUID.randomUUID(), new JobEnvConfig());
+        StreamingExecuteOption executeOption = new StreamingExecuteOption(paramMap, "sql-job-" + UUID.randomUUID(), new JobEnvConfig());
         StreamTableEnvironment tableEnvironment = executeOption.getTableEnvironment();
         for (SqlUdfDescriptor udf : udfDescriptors) {
             Class<?> aClass = Thread.currentThread().getContextClassLoader().loadClass(udf.getClassFullName());
