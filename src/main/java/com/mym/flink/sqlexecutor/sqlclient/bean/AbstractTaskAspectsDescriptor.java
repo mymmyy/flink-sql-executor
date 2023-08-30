@@ -22,6 +22,15 @@ public abstract class AbstractTaskAspectsDescriptor {
     public abstract Map<String, String> configProgramParam(String[] args, SqlClient sqlClient);
 
     /**
+     * 配置Flink运行参数，自动设置到Stream的env中。return null 将使用默认值
+     *
+     * @param args      args参数
+     * @param sqlClient sql客户端
+     * @return {@link JobEnvConfig}
+     */
+    public abstract JobEnvConfig configJobEnvSetting(String[] args, SqlClient sqlClient);
+
+    /**
      * 解析外部参数前：SqlClient初始化后，解析sql文件前
      *
      * @param args      main参数

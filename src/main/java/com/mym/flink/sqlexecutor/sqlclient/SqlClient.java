@@ -1,5 +1,6 @@
 package com.mym.flink.sqlexecutor.sqlclient;
 
+import com.mym.flink.sqlexecutor.sqlclient.enumtype.ColumnType;
 import com.mym.flink.sqlexecutor.sqlclient.enumtype.GraphNodeOptions;
 import com.mym.flink.sqlexecutor.sqlclient.graph.GraphNode;
 import com.mym.flink.sqlexecutor.sqlclient.utils.GraphNodeParser;
@@ -56,9 +57,13 @@ public class SqlClient {
      * @throws Exception 异常
      */
     public void execute(String[] args, String baseFilePath) throws Exception {
+        /* system udf set */
+        systemUDFSet();
+
         /* parse outer param */
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
-        Map<String, String> paramMap = parameterTool.toMap();
+        Map<String, String> argsParamMap = parameterTool.toMap();
+        Map<String, String> paramMap = new HashMap<>(argsParamMap);
         Optional.ofNullable(taskAspectsDescriptor.configProgramParam(args, this)).ifPresent(paramMap::putAll);
         taskAspectsDescriptor.beforeParseParam(args, this);
         taskAspectsDescriptor.registerUdf(this);
@@ -78,7 +83,9 @@ public class SqlClient {
         LOGGER.info("parse execute info over.");
 
         /* init env */
-        StreamingExecuteOption executeOption = new StreamingExecuteOption(paramMap, "sql-job-" + UUID.randomUUID(), new JobEnvConfig());
+        JobEnvConfig jobEnvConfig = taskAspectsDescriptor.configJobEnvSetting(args, this);
+        jobEnvConfig = jobEnvConfig == null ? new JobEnvConfig() : jobEnvConfig;
+        StreamingExecuteOption executeOption = new StreamingExecuteOption(paramMap, "sql-job-" + UUID.randomUUID(), jobEnvConfig);
         StreamTableEnvironment tableEnvironment = executeOption.getTableEnvironment();
         for (SqlUdfDescriptor udf : udfDescriptors) {
             Class<?> aClass = Thread.currentThread().getContextClassLoader().loadClass(udf.getClassFullName());
@@ -123,23 +130,55 @@ public class SqlClient {
 
         /* execute */
         taskAspectsDescriptor.beforeExecute(args, this);
-        executeOption.execute();
+        try {
+            executeOption.execute();
+        } catch (IllegalStateException e){
+            LOGGER.warn("executeOption execute catch a IllegalStateException error, if the task is a FlinkSQL task, you just ignore it. if not, you must check problem!", e);
+            if(!"No operators defined in streaming topology. Cannot execute.".equals(e.getMessage())){
+                throw e;
+            }
+        }
         taskAspectsDescriptor.afterExecute(args, this);
         LOGGER.info("submit execute.");
     }
 
+    private void systemUDFSet() {
+        SqlUdfDescriptor jsonValueUDFDescriptor = new SqlUdfDescriptor();
+        jsonValueUDFDescriptor.setDesc("从输入的 JSON 字符串中提取标量值.");
+        jsonValueUDFDescriptor.setCallName("JSON_VALUE");
+        jsonValueUDFDescriptor.setReturnType(ColumnType.STRING);
+        jsonValueUDFDescriptor.setClassFullName("com.mym.flink.sqlexecutor.sqlclient.udf.JsonValueUDF");
+        LinkedHashMap<String, ColumnType> argsMap = new LinkedHashMap<String, ColumnType>();
+        argsMap.put("jsonString", ColumnType.STRING);
+        argsMap.put("keyPath", ColumnType.STRING);
+        jsonValueUDFDescriptor.setArgsMap(argsMap);
+        registerUdf(jsonValueUDFDescriptor);
+
+        // 其他UDF注册
+    }
+
     private void buildExecuteGraph(StreamTableEnvironment tableEnvironment, Map<String, CustomOperatorGraphNode> customOperatorGraphNodeMap, GraphNode graphNode) {
-        if(graphNode.getGraphNodeOptions() == GraphNodeOptions.SQL){
-            SqlGraphNode sqlGraphNode = (SqlGraphNode) graphNode;
-            if(customOperatorGraphNodeMap.containsKey(sqlGraphNode.getTemporaryTableName())){
-                Table table = tableEnvironment.sqlQuery(sqlGraphNode.getStatement().getSql());
-                CustomOperatorGraphNode customOperatorGraphNode = customOperatorGraphNodeMap.get(sqlGraphNode.getTemporaryTableName());
-                DataStream<Row> rowDataStream = tableEnvironment.toDataStream(table);
-                DataStream<Row> dataStream = customOperatorGraphNode.getCustomOperator().buildStream(rowDataStream);
-                tableEnvironment.createTemporaryView(customOperatorGraphNode.getTemporaryTableName(), dataStream);
-            } else {
-                tableEnvironment.executeSql(sqlGraphNode.getStatement().getSql().replaceAll(";", ""));
+        try {
+            if(graphNode.getGraphNodeOptions() == GraphNodeOptions.SQL){
+                SqlGraphNode sqlGraphNode = (SqlGraphNode) graphNode;
+                if(customOperatorGraphNodeMap.containsKey(sqlGraphNode.getTemporaryTableName())){
+                    Table table = tableEnvironment.sqlQuery(sqlGraphNode.getStatement().getSql());
+                    CustomOperatorGraphNode customOperatorGraphNode = customOperatorGraphNodeMap.get(sqlGraphNode.getTemporaryTableName());
+                    DataStream<Row> rowDataStream = tableEnvironment.toDataStream(table);
+                    DataStream<Row> dataStream = customOperatorGraphNode.getCustomOperator().buildStream(rowDataStream);
+                    tableEnvironment.createTemporaryView(customOperatorGraphNode.getTemporaryTableName(), dataStream);
+                } else {
+                    tableEnvironment.executeSql(sqlGraphNode.getStatement().getSql().replaceAll(";", ""));
+                }
             }
+        } catch (Exception e){
+            if(graphNode.getGraphNodeOptions() == GraphNodeOptions.SQL){
+                SqlGraphNode sqlGraphNode = (SqlGraphNode) graphNode;
+                LOGGER.error("build execute graph occur error!, sqlGraphNode, nodeName:{}, temporaryTableName:{}, \n sql:{} \n errorMsg:{}", sqlGraphNode.getNodeName(), sqlGraphNode.getTemporaryTableName(), sqlGraphNode.getStatement().getSql(), e.getMessage());
+            } else {
+                LOGGER.error("build execute graph occur error!, graphNode:{},  errorMsg:{}", graphNode, e.getMessage());
+            }
+            throw e;
         }
     }
 

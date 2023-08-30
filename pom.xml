@@ -13,15 +13,12 @@
         <runtimes.scope>provided</runtimes.scope>
         <skipTests>true</skipTests>
         <scala.version>2.12</scala.version>
-        <scala.binary.version>2.12</scala.binary.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <flink.version>1.13.6</flink.version>
 
-        <!--内部公用module-->
-        <common.version>2.0-dev</common.version>
         <!--ali vetex-->
-        <ververica-connector-datahub.version>1.11-vvr-2.1.3</ververica-connector-datahub.version>
+        <ververica-connector-datahub.version>1.13-vvr-4.0.7</ververica-connector-datahub.version>
         <sts-credential-fetcher.version>1.0.2-SNAPSHOT</sts-credential-fetcher.version>
         <vertx-jdbc-client.version>4.0.3</vertx-jdbc-client.version>
         <agroal.version>1.9</agroal.version>
@@ -231,12 +228,13 @@
             <artifactId>flink-clients_${scala.version}</artifactId>
             <scope>${runtimes.scope}</scope>
         </dependency>
-        <!-- flink table  flink sql 相关 start -->
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-common</artifactId>
-            <scope>compile</scope>
+            <artifactId>flink-table-planner-blink_${scala.version}</artifactId>
+            <version>${flink.version}</version>
+            <scope>${runtimes.scope}</scope>
         </dependency>
+        <!-- flink table  flink sql 相关 start -->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-jdbc_${scala.version}</artifactId>
@@ -296,11 +294,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>cn.thinkingdata</groupId>
-            <artifactId>thinkingdatasdk</artifactId>
-        </dependency>
-
 
         <!-- ============================工具 start============================ -->
         <!-- 时间工具类 -->
@@ -336,19 +329,6 @@
         <dependency>
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner-blink_2.12</artifactId>
-            <version>${flink.version}</version>
-            <scope>${runtimes.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-runtime-blink_2.12</artifactId>
-            <version>${flink.version}</version>
-            <scope>${runtimes.scope}</scope>
         </dependency>
 
         <!--        <dependency>-->

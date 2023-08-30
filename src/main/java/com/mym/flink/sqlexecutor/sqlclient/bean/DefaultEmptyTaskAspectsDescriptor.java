@@ -11,6 +11,11 @@ public class DefaultEmptyTaskAspectsDescriptor extends AbstractTaskAspectsDescri
     }
 
     @Override
+    public JobEnvConfig configJobEnvSetting(String[] args, SqlClient sqlClient) {
+        return null;
+    }
+
+    @Override
     public void beforeParseParam(String[] args, SqlClient sqlClient) {
 
     }

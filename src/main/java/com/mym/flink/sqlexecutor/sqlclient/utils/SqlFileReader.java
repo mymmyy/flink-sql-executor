@@ -166,7 +166,7 @@ public class SqlFileReader {
                 }
 
                 // 当我们遇到一个分号，我们知道 SQL 语句结束了
-                if (line.endsWith(SQL_DELIMITER)) {
+                if (line.endsWith(SQL_DELIMITER) && !line.contains(SQL_INNER_ANNOTATION_START)) {
                     sqlStatements.put(sqlSB.toString(), annotationSB.toString());
                     sqlSB = new StringBuilder();
                     annotationSB = new StringBuilder();

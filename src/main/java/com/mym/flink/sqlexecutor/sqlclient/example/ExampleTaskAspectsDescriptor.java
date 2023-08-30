@@ -2,6 +2,7 @@ package com.mym.flink.sqlexecutor.sqlclient.example;
 
 import com.mym.flink.sqlexecutor.sqlclient.SqlClient;
 import com.mym.flink.sqlexecutor.sqlclient.bean.AbstractTaskAspectsDescriptor;
+import com.mym.flink.sqlexecutor.sqlclient.bean.JobEnvConfig;
 
 import java.util.Map;
 
@@ -13,6 +14,11 @@ import java.util.Map;
 public class ExampleTaskAspectsDescriptor extends AbstractTaskAspectsDescriptor {
     @Override
     public Map<String, String> configProgramParam(String[] args, SqlClient sqlClient) {
+        return null;
+    }
+
+    @Override
+    public JobEnvConfig configJobEnvSetting(String[] args, SqlClient sqlClient) {
         return null;
     }
 

@@ -33,14 +33,11 @@ public class JobEnvConfig {
 
     public void setIdleStateRetentionMin(Long idleStateRetentionMin) {
         this.idleStateRetentionMin = idleStateRetentionMin;
+        this.idleStateRetentionMax = this.idleStateRetentionMin + 300;
     }
 
     public Long getIdleStateRetentionMax() {
         return idleStateRetentionMax;
-    }
-
-    public void setIdleStateRetentionMax(Long idleStateRetentionMax) {
-        this.idleStateRetentionMax = idleStateRetentionMax;
     }
 
     public Integer getParallelism() {
