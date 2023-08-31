@@ -68,6 +68,7 @@ public class SqlClient {
         taskAspectsDescriptor.beforeParseParam(args, this);
         taskAspectsDescriptor.registerUdf(this);
         taskAspectsDescriptor.registerCustomOperator(this);
+        LOGGER.info("task program param:{}", paramMap);
 
         /* parse execute info */
         Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> ddldmlTuple2 = baseFilePath == null ? SqlFileReader.loadSql() : SqlFileReader.loadSql(baseFilePath);
