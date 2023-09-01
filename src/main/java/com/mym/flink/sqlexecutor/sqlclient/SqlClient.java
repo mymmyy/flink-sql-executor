@@ -1,6 +1,5 @@
 package com.mym.flink.sqlexecutor.sqlclient;
 
-import com.mym.flink.sqlexecutor.sqlclient.enumtype.ColumnType;
 import com.mym.flink.sqlexecutor.sqlclient.enumtype.GraphNodeOptions;
 import com.mym.flink.sqlexecutor.sqlclient.graph.GraphNode;
 import com.mym.flink.sqlexecutor.sqlclient.utils.GraphNodeParser;
@@ -28,14 +27,16 @@ public class SqlClient {
 
     private final List<CustomOperatorDescriptor> userCustomOperatorDescriptors = new ArrayList<>();
 
-    private final AbstractTaskAspectsDescriptor taskAspectsDescriptor;
+    private final AbstractTaskAspectsDescriptor userTaskAspectsDescriptor;
+
+    private final AbstractTaskAspectsDescriptor defaultTaskAspectsDescriptor = new DefaultTaskAspectsDescriptor();
 
     public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor) {
-        this.taskAspectsDescriptor = taskAspectsDescriptor == null ? new DefaultEmptyTaskAspectsDescriptor() : taskAspectsDescriptor;
+        this.userTaskAspectsDescriptor = taskAspectsDescriptor == null ? new DefaultEmptyTaskAspectsDescriptor() : taskAspectsDescriptor;
     }
 
     public SqlClient() {
-        this.taskAspectsDescriptor =  new DefaultEmptyTaskAspectsDescriptor();
+        this(new DefaultEmptyTaskAspectsDescriptor());
     }
 
     /**
@@ -57,17 +58,18 @@ public class SqlClient {
      * @throws Exception 异常
      */
     public void execute(String[] args, String baseFilePath) throws Exception {
-        /* system udf set */
-        systemUDFSet();
-
         /* parse outer param */
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
         Map<String, String> argsParamMap = parameterTool.toMap();
         Map<String, String> paramMap = new HashMap<>(argsParamMap);
-        Optional.ofNullable(taskAspectsDescriptor.configProgramParam(args, this)).ifPresent(paramMap::putAll);
-        taskAspectsDescriptor.beforeParseParam(args, this);
-        taskAspectsDescriptor.registerUdf(this);
-        taskAspectsDescriptor.registerCustomOperator(this);
+        Optional.ofNullable(defaultTaskAspectsDescriptor.configProgramParam(args, this)).ifPresent(paramMap::putAll);
+        Optional.ofNullable(userTaskAspectsDescriptor.configProgramParam(args, this)).ifPresent(paramMap::putAll);
+        defaultTaskAspectsDescriptor.beforeParseParam(args, this);
+        defaultTaskAspectsDescriptor.registerUdf(this);
+        defaultTaskAspectsDescriptor.registerCustomOperator(this);
+        userTaskAspectsDescriptor.beforeParseParam(args, this);
+        userTaskAspectsDescriptor.registerUdf(this);
+        userTaskAspectsDescriptor.registerCustomOperator(this);
         LOGGER.info("task program param:{}", paramMap);
 
         /* parse execute info */
@@ -84,8 +86,10 @@ public class SqlClient {
         LOGGER.info("parse execute info over.");
 
         /* init env */
-        JobEnvConfig jobEnvConfig = taskAspectsDescriptor.configJobEnvSetting(args, this);
+        JobEnvConfig jobEnvConfig = defaultTaskAspectsDescriptor.configJobEnvSetting(args, this);
         jobEnvConfig = jobEnvConfig == null ? new JobEnvConfig() : jobEnvConfig;
+        jobEnvConfig.merge(userTaskAspectsDescriptor.configJobEnvSetting(args, this));
+
         StreamingExecuteOption executeOption = new StreamingExecuteOption(paramMap, "sql-job-" + UUID.randomUUID(), jobEnvConfig);
         StreamTableEnvironment tableEnvironment = executeOption.getTableEnvironment();
         for (SqlUdfDescriptor udf : udfDescriptors) {
@@ -130,7 +134,8 @@ public class SqlClient {
         LOGGER.info("build execute graph over.");
 
         /* execute */
-        taskAspectsDescriptor.beforeExecute(args, this);
+        defaultTaskAspectsDescriptor.beforeExecute(args, this);
+        userTaskAspectsDescriptor.beforeExecute(args, this);
         try {
             executeOption.execute();
         } catch (IllegalStateException e){
@@ -139,23 +144,9 @@ public class SqlClient {
                 throw e;
             }
         }
-        taskAspectsDescriptor.afterExecute(args, this);
+        defaultTaskAspectsDescriptor.afterExecute(args, this);
+        userTaskAspectsDescriptor.afterExecute(args, this);
         LOGGER.info("submit execute.");
-    }
-
-    private void systemUDFSet() {
-        SqlUdfDescriptor jsonValueUDFDescriptor = new SqlUdfDescriptor();
-        jsonValueUDFDescriptor.setDesc("从输入的 JSON 字符串中提取标量值.");
-        jsonValueUDFDescriptor.setCallName("JSON_VALUE");
-        jsonValueUDFDescriptor.setReturnType(ColumnType.STRING);
-        jsonValueUDFDescriptor.setClassFullName("com.mym.flink.sqlexecutor.sqlclient.udf.JsonValueUDF");
-        LinkedHashMap<String, ColumnType> argsMap = new LinkedHashMap<String, ColumnType>();
-        argsMap.put("jsonString", ColumnType.STRING);
-        argsMap.put("keyPath", ColumnType.STRING);
-        jsonValueUDFDescriptor.setArgsMap(argsMap);
-        registerUdf(jsonValueUDFDescriptor);
-
-        // 其他UDF注册
     }
 
     private void buildExecuteGraph(StreamTableEnvironment tableEnvironment, Map<String, CustomOperatorGraphNode> customOperatorGraphNodeMap, GraphNode graphNode) {

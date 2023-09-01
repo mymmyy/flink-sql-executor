@@ -47,4 +47,12 @@ public class JobEnvConfig {
     public void setParallelism(Integer parallelism) {
         this.parallelism = parallelism;
     }
+
+    public void merge(JobEnvConfig mergeConfig){
+        if(mergeConfig == null){
+            return;
+        }
+        this.setParallelism(mergeConfig.getParallelism() == null ? this.getParallelism() : mergeConfig.getParallelism());
+        this.setIdleStateRetentionMin(mergeConfig.getIdleStateRetentionMin() == null ? this.getIdleStateRetentionMin() : mergeConfig.getIdleStateRetentionMin());
+    }
 }
