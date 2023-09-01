@@ -32,11 +32,11 @@ public class SqlClient {
     private final AbstractTaskAspectsDescriptor defaultTaskAspectsDescriptor = new DefaultTaskAspectsDescriptor();
 
     public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor) {
-        this.userTaskAspectsDescriptor = taskAspectsDescriptor == null ? new DefaultEmptyTaskAspectsDescriptor() : taskAspectsDescriptor;
+        this.userTaskAspectsDescriptor = taskAspectsDescriptor == null ? new EmptyTaskAspectsDescriptor() : taskAspectsDescriptor;
     }
 
     public SqlClient() {
-        this(new DefaultEmptyTaskAspectsDescriptor());
+        this(new EmptyTaskAspectsDescriptor());
     }
 
     /**
