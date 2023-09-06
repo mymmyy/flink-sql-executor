@@ -2,6 +2,7 @@ package com.mym.flink.sqlexecutor.sqlclient;
 
 import com.mym.flink.sqlexecutor.sqlclient.enumtype.GraphNodeOptions;
 import com.mym.flink.sqlexecutor.sqlclient.graph.GraphNode;
+import com.mym.flink.sqlexecutor.sqlclient.utils.ConfigReader;
 import com.mym.flink.sqlexecutor.sqlclient.utils.GraphNodeParser;
 import com.mym.flink.sqlexecutor.sqlclient.utils.SqlFileReader;
 import com.mym.flink.sqlexecutor.sqlclient.utils.SqlRender;
@@ -31,8 +32,15 @@ public class SqlClient {
 
     private final AbstractTaskAspectsDescriptor defaultTaskAspectsDescriptor = new DefaultTaskAspectsDescriptor();
 
-    public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor) {
+    private final String configFilePath;
+
+    public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor, String configFilePath) {
         this.userTaskAspectsDescriptor = taskAspectsDescriptor == null ? new EmptyTaskAspectsDescriptor() : taskAspectsDescriptor;
+        this.configFilePath = configFilePath == null ? "/config.properties" : configFilePath;
+    }
+
+    public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor) {
+        this(taskAspectsDescriptor, null);
     }
 
     public SqlClient() {
@@ -59,9 +67,15 @@ public class SqlClient {
      */
     public void execute(String[] args, String baseFilePath) throws Exception {
         /* parse outer param */
+        Map<String, String> fileConfigMap = ConfigReader.readPropertiesConfig(this.configFilePath);
+        if(fileConfigMap == null){
+            LOGGER.info("read config file over, config file not exists or had no configuration! path:{}", this.configFilePath);
+            fileConfigMap = new HashMap<>(0);
+        }
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
         Map<String, String> argsParamMap = parameterTool.toMap();
-        Map<String, String> paramMap = new HashMap<>(argsParamMap);
+        Map<String, String> paramMap = new HashMap<>(fileConfigMap);
+        paramMap.putAll(argsParamMap);
         Optional.ofNullable(defaultTaskAspectsDescriptor.configProgramParam(args, this)).ifPresent(paramMap::putAll);
         Optional.ofNullable(userTaskAspectsDescriptor.configProgramParam(args, this)).ifPresent(paramMap::putAll);
         defaultTaskAspectsDescriptor.beforeParseParam(args, this);
@@ -71,6 +85,8 @@ public class SqlClient {
         userTaskAspectsDescriptor.registerUdf(this);
         userTaskAspectsDescriptor.registerCustomOperator(this);
         LOGGER.info("task program param:{}", paramMap);
+        // 解析flink作业参数 TODO
+        JobEnvConfig jobEnvConfigFromFile = new JobEnvConfig();
 
         /* parse execute info */
         Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> ddldmlTuple2 = baseFilePath == null ? SqlFileReader.loadSql() : SqlFileReader.loadSql(baseFilePath);
@@ -87,7 +103,11 @@ public class SqlClient {
 
         /* init env */
         JobEnvConfig jobEnvConfig = defaultTaskAspectsDescriptor.configJobEnvSetting(args, this);
-        jobEnvConfig = jobEnvConfig == null ? new JobEnvConfig() : jobEnvConfig;
+        if(jobEnvConfig != null){
+            jobEnvConfig.merge(jobEnvConfigFromFile);
+        } else {
+            jobEnvConfig = jobEnvConfigFromFile;
+        }
         jobEnvConfig.merge(userTaskAspectsDescriptor.configJobEnvSetting(args, this));
 
         StreamingExecuteOption executeOption = new StreamingExecuteOption(paramMap, "sql-job-" + UUID.randomUUID(), jobEnvConfig);
