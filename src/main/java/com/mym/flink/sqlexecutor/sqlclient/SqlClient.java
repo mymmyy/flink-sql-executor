@@ -24,6 +24,15 @@ public class SqlClient {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(SqlClient.class);
 
+    /**
+     * jar包中Resource依赖文件目录：集群环境不一定读的到
+     */
+    public final static String RESOURCE_PATH_DEFAULT_PATH = "sql";
+    /**
+     * 集群依赖文件目录（绝对目录），目录开头的目录分隔符不用写，会自动根据系统添加
+     */
+    public final static String CLUSTER_PATH_DEFAULT_PATH = "flink/usrlib";
+
     private final List<SqlUdfDescriptor> udfDescriptors = new ArrayList<>();
 
     private final List<CustomOperatorDescriptor> userCustomOperatorDescriptors = new ArrayList<>();
@@ -34,17 +43,20 @@ public class SqlClient {
 
     private final String configFilePath;
 
-    public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor, String configFilePath) {
+    private boolean isClusterEnv = true;
+
+    public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor, String configFilePath, boolean isClusterEnv) {
         this.userTaskAspectsDescriptor = taskAspectsDescriptor == null ? new EmptyTaskAspectsDescriptor() : taskAspectsDescriptor;
         this.configFilePath = configFilePath == null ? "/config.properties" : configFilePath;
+        this.isClusterEnv = isClusterEnv;
     }
 
-    public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor) {
-        this(taskAspectsDescriptor, null);
+    public SqlClient(AbstractTaskAspectsDescriptor taskAspectsDescriptor, boolean isClusterEnv) {
+        this(taskAspectsDescriptor, null, isClusterEnv);
     }
 
     public SqlClient() {
-        this(new EmptyTaskAspectsDescriptor());
+        this(new EmptyTaskAspectsDescriptor(), true);
     }
 
     /**
@@ -87,9 +99,10 @@ public class SqlClient {
         LOGGER.info("task program param:{}", paramMap);
         // 解析flink作业参数 TODO
         JobEnvConfig jobEnvConfigFromFile = new JobEnvConfig();
+        jobEnvConfigFromFile.setIdleStateRetentionMin(-1L);
 
         /* parse execute info */
-        Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> ddldmlTuple2 = baseFilePath == null ? SqlFileReader.loadSql() : SqlFileReader.loadSql(baseFilePath);
+        Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> ddldmlTuple2 = baseFilePath == null ? SqlFileReader.loadSql() : SqlFileReader.loadSql(baseFilePath, !isClusterEnv);
         Tuple2<LinkedList<GraphNode>, LinkedList<GraphNode>> ddldmlGraphNodeTuple2 = GraphNodeParser.parseToGraphNode(ddldmlTuple2, paramMap);
 
         List<CustomOperatorGraphNode> userCodeSetGraphNode = userCustomOperatorDescriptors.stream()

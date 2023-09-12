@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -42,17 +43,17 @@ public class SqlFileReader {
     }
 
     public static Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> loadSql() throws Exception {
-        return loadSql("sql");
+        return loadSql("sql", true);
     }
 
-    public static synchronized Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> loadSql(String baseDirName) throws Exception {
+    public static synchronized Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> loadSql(String baseDirName, boolean isResourcePath) throws Exception {
         LOGGER.info("start to load sql, scan base dir then foreach read sql file!");
         Tuple2<LinkedList<SqlGraphNode>, LinkedList<SqlGraphNode>> ddldmlTuple2 = new Tuple2<>();
         // f0 from ddl; f1 from dml
         ddldmlTuple2.f0 = new LinkedList<>();
         ddldmlTuple2.f1 = new LinkedList<>();
         String systemBasePath = systemFileSeparator + baseDirName;
-        List<String> fileNameList = getResourceFiles(systemBasePath, false);
+        List<String> fileNameList = isResourcePath ? getResourceFiles(systemBasePath, false) : getPathFiles(systemBasePath, false);
         LOGGER.info("read file from baseDirName:{}, systemBasePath:{}, get fileNameList:{}", baseDirName, systemBasePath, fileNameList);
 
         LOGGER.info("read sql over, there is all read sql graph node info print start ---------------------");
@@ -62,9 +63,10 @@ public class SqlFileReader {
                 LOGGER.warn("foreach read sql, fileName is not a .sql file, will skip it!");
                 continue;
             }
-            String path = resourceSeparator + baseDirName + resourceSeparator + fileName;
+            String path = isResourcePath ? resourceSeparator + baseDirName + resourceSeparator + fileName
+                    : systemBasePath + systemFileSeparator + fileName;
             LOGGER.info("foreach read sql, file name:{}", path);
-            LinkedList<SqlGraphNode> sqlGraphNodes = parseSqlFile(path);
+            LinkedList<SqlGraphNode> sqlGraphNodes = parseSqlFile(path, isResourcePath);
             if(fileName.toLowerCase(Locale.ROOT).startsWith("ddl_")){
                 ddldmlTuple2.f0.addAll(sqlGraphNodes);
                 isDDL = true;
@@ -80,10 +82,9 @@ public class SqlFileReader {
 
         return ddldmlTuple2;
     }
-    public static LinkedList<SqlGraphNode> parseSqlFile(String fileName) throws IOException {
+    public static LinkedList<SqlGraphNode> parseSqlFile(String fileName, boolean isResourcePath) throws IOException {
 //        fileName = "/sql/ddl_test.sql";
-        URL resource = SqlFileReader.class.getResource(fileName);
-        LinkedHashMap<String, String> readResultMap = readSQLFile(resource.getFile());
+        LinkedHashMap<String, String> readResultMap = readSQLFile(fileName, isResourcePath);
         LinkedList<SqlGraphNode> resultList = new LinkedList<>();
         Set<String> tableNameDistinct = new HashSet<>();
         Set<String> nodeNameDistinct = new HashSet<>();
@@ -139,7 +140,15 @@ public class SqlFileReader {
 
         return resultList;
     }
-    private static LinkedHashMap<String, String> readSQLFile(String filePath) throws IOException {
+    private static LinkedHashMap<String, String> readSQLFile(String fileName, boolean isResourcePath) throws IOException {
+        String filePath = null;
+        if(isResourcePath){
+            URL resource = SqlFileReader.class.getResource(fileName);
+            filePath = resource.getFile();
+        } else {
+            filePath = fileName;
+        }
+
         LinkedHashMap<String, String> sqlStatements = new LinkedHashMap();
         StringBuilder annotationSB = new StringBuilder();
         StringBuilder sqlSB = new StringBuilder();
@@ -209,6 +218,31 @@ public class SqlFileReader {
         }
 
         return filenames;
+    }
+
+    private static List<String> getPathFiles(String path, boolean getAbsolutePath) throws URISyntaxException, IOException {
+        // 创建File对象
+        File directory = new File(path);
+        if(!directory.exists()){
+            return new ArrayList<>();
+        }
+        // 列出目录中的所有文件和子目录
+        File[] filesList = directory.listFiles();
+        List<String> fileName = new ArrayList<>();
+        if (filesList != null) {
+            for (File file : filesList) {
+                if (file.isFile()) {
+                    if(getAbsolutePath){
+                        fileName.add(file.getAbsolutePath());
+                    } else {
+                        fileName.add(file.getName());
+                    }
+                }
+            }
+        } else {
+            System.out.println("The specified path is not a valid directory or an I/O error occurred. path: " + path);
+        }
+        return fileName;
     }
 
     private static List<String> extractDependentTable(String input) {

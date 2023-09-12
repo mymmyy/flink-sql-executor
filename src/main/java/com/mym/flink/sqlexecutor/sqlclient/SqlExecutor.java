@@ -31,6 +31,6 @@ public class SqlExecutor {
             descriptor= (AbstractTaskAspectsDescriptor) aClass.newInstance();
         }
 
-        new SqlClient(descriptor).execute(args);
+        new SqlClient(descriptor, true).execute(args);
     }
 }

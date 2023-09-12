@@ -6,6 +6,6 @@ public class ExampleSqlExecutor {
 
     public static void main(String[] args) throws Exception {
         ExampleTaskAspectsDescriptor exampleTaskAspectsDescriptor = new ExampleTaskAspectsDescriptor();
-        new SqlClient(exampleTaskAspectsDescriptor).execute(args, "sql");
+        new SqlClient(exampleTaskAspectsDescriptor, false).execute(args, "testsql");
     }
 }
