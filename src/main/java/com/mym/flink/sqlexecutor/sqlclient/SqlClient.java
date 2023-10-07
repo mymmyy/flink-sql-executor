@@ -193,7 +193,7 @@ public class SqlClient {
                     DataStream<Row> dataStream = customOperatorGraphNode.getCustomOperator().buildStream(rowDataStream);
                     tableEnvironment.createTemporaryView(customOperatorGraphNode.getTemporaryTableName(), dataStream);
                 } else {
-                    tableEnvironment.executeSql(sqlGraphNode.getStatement().getSql().replaceAll(";", ""));
+                    tableEnvironment.sqlUpdate(sqlGraphNode.getStatement().getSql().replaceAll(";", ""));
                 }
             }
         } catch (Exception e){

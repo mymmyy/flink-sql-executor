@@ -55,7 +55,7 @@ public class StreamingExecuteOption implements FlinkExecuteOption {
     }
 
     public void execute() throws Exception {
-        this.streamEnvironment.execute(this.jobName);
+        this.tableEnvironment.execute(this.jobName);
     }
 
     public ExecutionOptions getExecutionMode() {
