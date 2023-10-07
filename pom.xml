@@ -357,7 +357,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -373,6 +373,8 @@
                                         <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                                     </manifestEntries>
                                 </transformer>
+                                <!-- The service transformer is needed to merge META-INF/services files -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                             <relocations combine.self="override">
                                 <relocation>
